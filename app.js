@@ -155,7 +155,7 @@ async function createPoster() {
     const gridBottom = 88;
     const cardWidth = (canvas.width - edge * 2 - gap * (columns - 1)) / columns;
     const cardHeight = (canvas.height - gridTop - gridBottom - gap * (rows - 1)) / rows;
-    const captionHeight = 76;
+    const captionHeight = 92;
     const imageHeight = Math.max(100, cardHeight - captionHeight);
     const images = await Promise.all(entries.map(entry => loadImage(entry.image)));
 
@@ -177,12 +177,12 @@ async function createPoster() {
       context.textAlign = 'center';
       context.textBaseline = 'middle';
       context.fillStyle = '#77756f';
-      context.font = '500 16px "Noto Sans KR", sans-serif';
-      context.fillText(work, x + cardWidth / 2, y + imageHeight + 23);
+      context.font = '500 21px "Noto Sans KR", sans-serif';
+      context.fillText(work, x + cardWidth / 2, y + imageHeight + 29);
       context.fillStyle = '#1c202a';
-      context.font = '600 24px "Noto Sans KR", sans-serif';
+      context.font = '700 32px "Noto Sans KR", sans-serif';
       const name = entry.name.length > 14 ? `${entry.name.slice(0, 14)}…` : entry.name;
-      context.fillText(name, x + cardWidth / 2, y + imageHeight + 51);
+      context.fillText(name, x + cardWidth / 2, y + imageHeight + 63);
     });
     context.textAlign = 'start';
     posterBlob = await canvasToPng(canvas);
