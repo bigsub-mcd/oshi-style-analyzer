@@ -29,12 +29,40 @@ function setImage(card, file) {
   reader.readAsDataURL(file);
 }
 
+async function pasteClipboardImage(card) {
+  const pasteButton = card.querySelector('.image-paste');
+  if (!navigator.clipboard?.read) {
+    pasteButton.textContent = '사진 선택을 이용해 주세요';
+    setTimeout(() => { pasteButton.textContent = '클립보드 붙여넣기'; }, 2600);
+    return;
+  }
+
+  try {
+    const clipboardItems = await navigator.clipboard.read();
+    for (const item of clipboardItems) {
+      const imageType = item.types.find(type => type.startsWith('image/'));
+      if (imageType) {
+        setImage(card, await item.getType(imageType));
+        pasteButton.textContent = '붙여넣기 완료 ✓';
+        setTimeout(() => { pasteButton.textContent = '클립보드 붙여넣기'; }, 1800);
+        return;
+      }
+    }
+    throw new Error('No image in clipboard');
+  } catch {
+    pasteButton.textContent = '이미지를 복사한 뒤 다시 눌러 주세요';
+    setTimeout(() => { pasteButton.textContent = '클립보드 붙여넣기'; }, 2600);
+  }
+}
+
 function addCard() {
   if (cards.children.length >= MAX_CARDS) return;
   const card = template.content.firstElementChild.cloneNode(true);
   const drop = card.querySelector('.image-drop');
   card.querySelector('.remove').addEventListener('click', () => { card.remove(); updateUI(); });
   card.querySelector('.file-input').addEventListener('change', (event) => setImage(card, event.target.files[0]));
+  card.querySelector('.image-select').addEventListener('click', () => card.querySelector('.file-input').click());
+  card.querySelector('.image-paste').addEventListener('click', () => pasteClipboardImage(card));
   drop.addEventListener('paste', (event) => {
     const image = [...event.clipboardData.items].find(item => item.type.startsWith('image/'));
     if (image) { event.preventDefault(); setImage(card, image.getAsFile()); }
