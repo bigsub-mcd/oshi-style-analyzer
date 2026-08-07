@@ -72,6 +72,7 @@ function posterEntries() {
   return [...cards.querySelectorAll('.character-card')].map(card => ({
     image: card.querySelector('.preview').src,
     hasImage: !card.querySelector('.preview').hidden,
+    work: card.querySelector('.work').value.trim() || '작품명 미입력',
     name: card.querySelector('.name').value.trim() || '이름 미입력'
   })).filter(entry => entry.hasImage);
 }
@@ -154,7 +155,8 @@ async function createPoster() {
     const gridBottom = 88;
     const cardWidth = (canvas.width - edge * 2 - gap * (columns - 1)) / columns;
     const cardHeight = (canvas.height - gridTop - gridBottom - gap * (rows - 1)) / rows;
-    const imageHeight = Math.max(100, cardHeight - 58);
+    const captionHeight = 76;
+    const imageHeight = Math.max(100, cardHeight - captionHeight);
     const images = await Promise.all(entries.map(entry => loadImage(entry.image)));
 
     entries.forEach((entry, index) => {
@@ -170,12 +172,17 @@ async function createPoster() {
       context.clip();
       drawCover(context, images[index], x, y, cardWidth, imageHeight);
       context.restore();
+      const work = entry.work.length > 22 ? `${entry.work.slice(0, 22)}…` : entry.work;
       context.fillStyle = '#1c202a';
-      context.font = '600 24px "Noto Sans KR", sans-serif';
       context.textAlign = 'center';
       context.textBaseline = 'middle';
-      const label = entry.name.length > 14 ? `${entry.name.slice(0, 14)}…` : entry.name;
-      context.fillText(label, x + cardWidth / 2, y + imageHeight + (cardHeight - imageHeight) / 2);
+      context.fillStyle = '#77756f';
+      context.font = '500 16px "Noto Sans KR", sans-serif';
+      context.fillText(work, x + cardWidth / 2, y + imageHeight + 23);
+      context.fillStyle = '#1c202a';
+      context.font = '600 24px "Noto Sans KR", sans-serif';
+      const name = entry.name.length > 14 ? `${entry.name.slice(0, 14)}…` : entry.name;
+      context.fillText(name, x + cardWidth / 2, y + imageHeight + 51);
     });
     context.textAlign = 'start';
     posterBlob = await canvasToPng(canvas);
