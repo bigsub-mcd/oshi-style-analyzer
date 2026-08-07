@@ -80,8 +80,26 @@ function loadImage(source) {
   return new Promise((resolve, reject) => {
     const image = new Image();
     image.onload = () => resolve(image);
-    image.onerror = reject;
+    image.onerror = () => reject(new Error('Image could not be loaded'));
     image.src = source;
+  });
+}
+
+function canvasToPng(canvas) {
+  return new Promise((resolve, reject) => {
+    const fallback = () => {
+      try {
+        const dataUrl = canvas.toDataURL('image/png');
+        const [header, data] = dataUrl.split(',');
+        const mime = header.match(/data:(.*?);/)?.[1] || 'image/png';
+        const bytes = atob(data);
+        const array = new Uint8Array(bytes.length);
+        for (let index = 0; index < bytes.length; index += 1) array[index] = bytes.charCodeAt(index);
+        resolve(new Blob([array], { type: mime }));
+      } catch (error) { reject(error); }
+    };
+    if (!canvas.toBlob) { fallback(); return; }
+    canvas.toBlob(blob => { if (blob) resolve(blob); else fallback(); }, 'image/png');
   });
 }
 
@@ -95,6 +113,7 @@ function drawCover(context, image, x, y, width, height) {
 async function createPoster() {
   const entries = posterEntries();
   if (!entries.length) {
+    posterBlob = undefined;
     posterStatus.textContent = '사진을 한 장 이상 넣어야 포스터를 만들 수 있어요.';
     posterResult.hidden = false;
     posterPreview.removeAttribute('src');
@@ -105,6 +124,7 @@ async function createPoster() {
 
   makePoster.disabled = true;
   makePoster.textContent = '포스터 만드는 중…';
+  posterBlob = undefined;
   try {
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d');
@@ -158,7 +178,7 @@ async function createPoster() {
       context.fillText(label, x + cardWidth / 2, y + imageHeight + (cardHeight - imageHeight) / 2);
     });
     context.textAlign = 'start';
-    posterBlob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    posterBlob = await canvasToPng(canvas);
     if (!posterBlob) throw new Error('Poster export failed');
     if (posterPreview.src.startsWith('blob:')) URL.revokeObjectURL(posterPreview.src);
     posterPreview.src = URL.createObjectURL(posterBlob);
@@ -167,12 +187,15 @@ async function createPoster() {
     sharePoster.disabled = false;
     downloadPoster.disabled = false;
     posterResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  } catch {
-    posterStatus.textContent = '포스터를 만들지 못했어요. 사진을 다시 선택한 뒤 시도해 주세요.';
+  } catch (error) {
+    console.error('Poster creation failed:', error);
+    posterStatus.textContent = '포스터를 만들지 못했어요. 사진을 다시 선택하거나 PNG·JPG 형식인지 확인해 주세요.';
     posterResult.hidden = false;
+    sharePoster.disabled = true;
+    downloadPoster.disabled = true;
   } finally {
     makePoster.disabled = false;
-    makePoster.innerHTML = '포스터 만들기 <span>↗</span>';
+    makePoster.innerHTML = '<span>포스터 만들기</span><i aria-hidden="true">↗</i>';
   }
 }
 
@@ -201,7 +224,14 @@ async function shareGeneratedPoster() {
 }
 
 addButton.addEventListener('click', addCard);
-clearButton.addEventListener('click', () => { cards.replaceChildren(); promptWrap.hidden = true; copy.disabled = true; updateUI(); });
+clearButton.addEventListener('click', () => {
+  cards.replaceChildren();
+  promptWrap.hidden = true;
+  posterResult.hidden = true;
+  posterBlob = undefined;
+  copy.disabled = true;
+  updateUI();
+});
 generate.addEventListener('click', makePrompt);
 makePoster.addEventListener('click', createPoster);
 downloadPoster.addEventListener('click', savePoster);
