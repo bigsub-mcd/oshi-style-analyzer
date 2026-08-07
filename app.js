@@ -9,6 +9,13 @@ const copy = document.querySelector('#copy');
 const promptWrap = document.querySelector('#prompt-wrap');
 const prompt = document.querySelector('#prompt');
 const promptStatus = document.querySelector('#prompt-status');
+const makePoster = document.querySelector('#make-poster');
+const posterResult = document.querySelector('#poster-result');
+const posterPreview = document.querySelector('#poster-preview');
+const sharePoster = document.querySelector('#share-poster');
+const downloadPoster = document.querySelector('#download-poster');
+const posterStatus = document.querySelector('#poster-status');
+let posterBlob;
 
 function updateUI() {
   const total = cards.children.length;
@@ -61,9 +68,144 @@ function makePrompt() {
   promptWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
+function posterEntries() {
+  return [...cards.querySelectorAll('.character-card')].map(card => ({
+    image: card.querySelector('.preview').src,
+    hasImage: !card.querySelector('.preview').hidden,
+    name: card.querySelector('.name').value.trim() || '이름 미입력'
+  })).filter(entry => entry.hasImage);
+}
+
+function loadImage(source) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = reject;
+    image.src = source;
+  });
+}
+
+function drawCover(context, image, x, y, width, height) {
+  const scale = Math.max(width / image.width, height / image.height);
+  const drawWidth = image.width * scale;
+  const drawHeight = image.height * scale;
+  context.drawImage(image, x + (width - drawWidth) / 2, y + (height - drawHeight) / 2, drawWidth, drawHeight);
+}
+
+async function createPoster() {
+  const entries = posterEntries();
+  if (!entries.length) {
+    posterStatus.textContent = '사진을 한 장 이상 넣어야 포스터를 만들 수 있어요.';
+    posterResult.hidden = false;
+    posterPreview.removeAttribute('src');
+    sharePoster.disabled = true;
+    downloadPoster.disabled = true;
+    return;
+  }
+
+  makePoster.disabled = true;
+  makePoster.textContent = '포스터 만드는 중…';
+  try {
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    canvas.width = 1080;
+    canvas.height = 1350;
+    context.fillStyle = '#f5f1e9';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+
+    context.fillStyle = '#ce4e3d';
+    context.font = '500 24px "DM Mono", monospace';
+    context.fillText('MY CHARACTER ARCHIVE', 72, 86);
+    context.fillStyle = '#1c202a';
+    context.font = '700 58px "Noto Sans KR", sans-serif';
+    context.fillText('내가 사랑한 캐릭터들', 72, 160);
+    context.strokeStyle = '#1c202a';
+    context.lineWidth = 2;
+    context.beginPath();
+    context.moveTo(72, 203);
+    context.lineTo(1008, 203);
+    context.stroke();
+
+    const columns = entries.length <= 2 ? entries.length : entries.length <= 6 ? 2 : 3;
+    const rows = Math.ceil(entries.length / columns);
+    const gap = 20;
+    const edge = 72;
+    const gridTop = 244;
+    const gridBottom = 88;
+    const cardWidth = (canvas.width - edge * 2 - gap * (columns - 1)) / columns;
+    const cardHeight = (canvas.height - gridTop - gridBottom - gap * (rows - 1)) / rows;
+    const imageHeight = Math.max(100, cardHeight - 58);
+    const images = await Promise.all(entries.map(entry => loadImage(entry.image)));
+
+    entries.forEach((entry, index) => {
+      const column = index % columns;
+      const row = Math.floor(index / columns);
+      const x = edge + column * (cardWidth + gap);
+      const y = gridTop + row * (cardHeight + gap);
+      context.fillStyle = '#fffdf8';
+      context.fillRect(x, y, cardWidth, cardHeight);
+      context.save();
+      context.beginPath();
+      context.rect(x, y, cardWidth, imageHeight);
+      context.clip();
+      drawCover(context, images[index], x, y, cardWidth, imageHeight);
+      context.restore();
+      context.fillStyle = '#1c202a';
+      context.font = '600 24px "Noto Sans KR", sans-serif';
+      context.textAlign = 'center';
+      context.textBaseline = 'middle';
+      const label = entry.name.length > 14 ? `${entry.name.slice(0, 14)}…` : entry.name;
+      context.fillText(label, x + cardWidth / 2, y + imageHeight + (cardHeight - imageHeight) / 2);
+    });
+    context.textAlign = 'start';
+    posterBlob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+    if (!posterBlob) throw new Error('Poster export failed');
+    if (posterPreview.src.startsWith('blob:')) URL.revokeObjectURL(posterPreview.src);
+    posterPreview.src = URL.createObjectURL(posterBlob);
+    posterStatus.textContent = `${entries.length}명의 캐릭터로 포스터를 만들었어요.`;
+    posterResult.hidden = false;
+    sharePoster.disabled = false;
+    downloadPoster.disabled = false;
+    posterResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  } catch {
+    posterStatus.textContent = '포스터를 만들지 못했어요. 사진을 다시 선택한 뒤 시도해 주세요.';
+    posterResult.hidden = false;
+  } finally {
+    makePoster.disabled = false;
+    makePoster.innerHTML = '포스터 만들기 <span>↗</span>';
+  }
+}
+
+function savePoster() {
+  if (!posterBlob) return;
+  const link = document.createElement('a');
+  link.href = posterPreview.src;
+  link.download = 'my-character-archive.png';
+  link.click();
+}
+
+async function shareGeneratedPoster() {
+  if (!posterBlob) return;
+  const file = new File([posterBlob], 'my-character-archive.png', { type: 'image/png' });
+  try {
+    if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
+      await navigator.share({ title: '나의 최애 캐릭터 아카이브', text: '내가 사랑한 캐릭터들', files: [file] });
+      posterStatus.textContent = '공유 창을 열었어요.';
+    } else {
+      savePoster();
+      posterStatus.textContent = '이 브라우저에서는 PNG 파일로 저장했어요.';
+    }
+  } catch (error) {
+    if (error.name !== 'AbortError') posterStatus.textContent = '공유하지 못했어요. PNG 저장을 이용해 주세요.';
+  }
+}
+
 addButton.addEventListener('click', addCard);
 clearButton.addEventListener('click', () => { cards.replaceChildren(); promptWrap.hidden = true; copy.disabled = true; updateUI(); });
 generate.addEventListener('click', makePrompt);
+makePoster.addEventListener('click', createPoster);
+downloadPoster.addEventListener('click', savePoster);
+sharePoster.addEventListener('click', shareGeneratedPoster);
 copy.addEventListener('click', async () => {
   try { await navigator.clipboard.writeText(prompt.value); copy.textContent = '복사 완료 ✓'; setTimeout(() => copy.textContent = '프롬프트 복사', 1600); }
   catch { prompt.select(); document.execCommand('copy'); copy.textContent = '복사 완료 ✓'; setTimeout(() => copy.textContent = '프롬프트 복사', 1600); }
