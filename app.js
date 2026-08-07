@@ -32,21 +32,44 @@ function setImage(card, file) {
     preview.src = reader.result;
     preview.hidden = false;
     card.querySelector('.image-placeholder').hidden = true;
+    card.querySelector('.image-status').textContent = '이미지를 넣었어요.';
   };
   reader.readAsDataURL(file);
+}
+
+async function pasteImage(card) {
+  const button = card.querySelector('.image-paste');
+  const status = card.querySelector('.image-status');
+  if (!navigator.clipboard?.read) {
+    status.textContent = '이 브라우저에서는 클립보드 붙여넣기를 지원하지 않아요. 이미지 업로드를 이용해 주세요.';
+    return;
+  }
+  button.disabled = true;
+  button.textContent = '붙여넣는 중…';
+  try {
+    const items = await navigator.clipboard.read();
+    for (const item of items) {
+      const imageType = item.types.find(type => type.startsWith('image/'));
+      if (imageType) {
+        setImage(card, await item.getType(imageType));
+        return;
+      }
+    }
+    status.textContent = '클립보드에서 이미지를 찾지 못했어요.';
+  } catch {
+    status.textContent = '클립보드 접근을 허용하지 못했어요. 이미지 업로드를 이용해 주세요.';
+  } finally {
+    button.disabled = false;
+    button.textContent = '클립보드 붙여넣기';
+  }
 }
 
 function addCard() {
   if (cards.children.length >= MAX_CARDS) return;
   const card = template.content.firstElementChild.cloneNode(true);
-  const drop = card.querySelector('.image-drop');
   card.querySelector('.remove').addEventListener('click', () => { card.remove(); updateUI(); });
   card.querySelector('.file-input').addEventListener('change', (event) => setImage(card, event.target.files[0]));
-  drop.addEventListener('paste', (event) => {
-    const image = [...event.clipboardData.items].find(item => item.type.startsWith('image/'));
-    if (image) { event.preventDefault(); setImage(card, image.getAsFile()); }
-  });
-  drop.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); card.querySelector('.file-input').click(); } });
+  card.querySelector('.image-paste').addEventListener('click', () => pasteImage(card));
   cards.append(card);
   updateUI();
   card.querySelector('.work').focus();
