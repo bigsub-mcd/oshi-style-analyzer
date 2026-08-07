@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="최애 캐릭터로 내 취향의 결을 찾아보는 작은 분석 도구" />
+    <title>취향 해부실 · Character Taste Analyzer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Noto+Sans+KR:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <header class="hero">
+        <p class="eyebrow">ARCHIVE 01 · CHARACTER TASTE ANALYZER</p>
+        <h1>취향은, <em>누구를</em><br />반복해서 사랑했는가에 남는다.</h1>
+        <p class="intro">마음에 품은 캐릭터들을 모아보세요. 작품의 경계를 넘나드는 당신만의 취향 지도를 위한 준비가 됩니다.</p>
+        <div class="hero-meta"><span>이미지 선택은 선택 사항</span><span aria-hidden="true">·</span><span>최대 10명</span><span aria-hidden="true">·</span><span>데이터는 브라우저에만 저장</span></div>
+      </header>
+
+      <section class="collection" aria-labelledby="collection-title">
+        <div class="section-heading">
+          <div>
+            <p class="section-no">01 / COLLECTION</p>
+            <h2 id="collection-title">나의 최애 아카이브 <span id="count">0</span><small>/ 10</small></h2>
+          </div>
+          <button class="text-button" id="clear-all" type="button" hidden>전체 비우기</button>
+        </div>
+
+        <div id="cards" class="cards" aria-live="polite"></div>
+
+        <button id="add-card" class="add-card" type="button">
+          <span class="plus">+</span>
+          <span><b>최애 캐릭터 추가</b><small>작품명과 이름을 적고, 이미지가 있다면 붙여넣어 보세요</small></span>
+        </button>
+        <p class="hint">카드의 이미지 영역을 클릭한 뒤 <kbd>⌘</kbd> + <kbd>V</kbd>로 클립보드 이미지를 붙여넣을 수 있어요.</p>
+      </section>
+
+      <section class="analysis" aria-labelledby="analysis-title">
+        <div class="section-heading">
+          <div>
+            <p class="section-no">02 / READING</p>
+            <h2 id="analysis-title">취향 읽기 준비</h2>
+          </div>
+        </div>
+        <div class="analysis-card">
+          <div class="analysis-copy">
+            <p class="label">AI ANALYSIS PROMPT</p>
+            <h3>목록을 바탕으로<br />당신의 취향을 읽어볼까요?</h3>
+            <p>버튼을 누르면 ChatGPT에 바로 붙여넣기 좋은 분석 요청문이 생성됩니다. 이미지 자체는 전송되지 않아요.</p>
+          </div>
+          <div class="actions">
+            <button id="generate" class="primary" type="button">분석 프롬프트 만들기 <span>↗</span></button>
+            <button id="copy" class="secondary" type="button" disabled>프롬프트 복사</button>
+          </div>
+        </div>
+        <div id="prompt-wrap" class="prompt-wrap" hidden>
+          <div class="prompt-top"><span>GENERATED PROMPT</span><span id="prompt-status"></span></div>
+          <textarea id="prompt" readonly aria-label="생성된 분석 프롬프트"></textarea>
+        </div>
+      </section>
+
+      <footer>MADE FOR THE CHARACTERS WHO NEVER LEFT YOUR MIND</footer>
+    </main>
+    <template id="card-template">
+      <article class="character-card">
+        <button class="remove" type="button" aria-label="이 캐릭터 삭제">×</button>
+        <label class="image-drop" tabindex="0">
+          <input class="file-input" type="file" accept="image/*" aria-label="캐릭터 이미지 선택" />
+          <span class="image-placeholder"><strong>이미지</strong><small>클릭 또는 붙여넣기</small></span>
+          <img class="preview" alt="" hidden />
+          <span class="image-edit">이미지 변경</span>
+        </label>
+        <div class="fields">
+          <label>작품명<input class="work" type="text" maxlength="60" placeholder="예: 장송의 프리렌" /></label>
+          <label>캐릭터명<input class="name" type="text" maxlength="60" placeholder="예: 페른" /></label>
+          <label class="memo-label">한 줄 메모 <span>선택</span><input class="memo" type="text" maxlength="100" placeholder="왜 좋아하는지, 첫인상 등" /></label>
+        </div>
+      </article>
+    </template>
+    <script src="app.js"></script>
+  </body>
+</html>
