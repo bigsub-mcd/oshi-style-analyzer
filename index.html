@@ -34,7 +34,7 @@
           <span class="plus">+</span>
           <span><b>최애 캐릭터 추가</b><small>작품명과 이름을 적고, 이미지가 있다면 사진을 골라보세요</small></span>
         </button>
-        <p class="hint">PC에서는 이미지 영역을 클릭한 뒤 <kbd>⌘</kbd> + <kbd>V</kbd>로 붙여넣을 수 있어요. 모바일에서는 <b>사진 선택</b>을 권장하며, 지원되는 브라우저에서는 <b>클립보드 붙여넣기</b>도 사용할 수 있어요.</p>
+        <p class="hint">이미지 영역을 누르면 사진을 고를 수 있어요. PC에서는 이미지 영역에 초점을 둔 뒤 <kbd>⌘</kbd> + <kbd>V</kbd>로 붙여넣을 수도 있어요.</p>
       </section>
 
       <section class="analysis" aria-labelledby="analysis-title">
@@ -66,19 +66,15 @@
     <template id="card-template">
       <article class="character-card">
         <button class="remove" type="button" aria-label="이 캐릭터 삭제">×</button>
-        <div class="image-drop" tabindex="0">
+        <label class="image-drop" tabindex="0">
           <input class="file-input" type="file" accept="image/*" aria-label="캐릭터 이미지 선택" />
-          <span class="image-placeholder"><strong>이미지</strong><small>사진을 선택해 주세요</small></span>
+          <span class="image-placeholder"><strong>이미지</strong><small>클릭 또는 붙여넣기</small></span>
           <img class="preview" alt="" hidden />
-          <span class="image-actions">
-            <button class="image-select" type="button">사진 선택</button>
-            <button class="image-paste" type="button">클립보드 붙여넣기</button>
-          </span>
-        </div>
+          <span class="image-edit">이미지 변경</span>
+        </label>
         <div class="fields">
           <label>작품명<input class="work" type="text" maxlength="60" placeholder="예: 장송의 프리렌" /></label>
           <label>캐릭터명<input class="name" type="text" maxlength="60" placeholder="예: 페른" /></label>
-          <label class="memo-label">한 줄 메모 <span>선택</span><input class="memo" type="text" maxlength="100" placeholder="왜 좋아하는지, 첫인상 등" /></label>
         </div>
       </article>
     </template>
