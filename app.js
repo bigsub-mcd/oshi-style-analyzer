@@ -233,12 +233,14 @@ async function createPoster() {
   }
 }
 
-function savePoster() {
+function openPosterInNewTab() {
   if (!posterBlob) return;
   const link = document.createElement('a');
   link.href = posterPreview.src;
-  link.download = 'my-character-archive.png';
+  link.target = '_blank';
+  link.rel = 'noopener';
   link.click();
+  posterStatus.textContent = '새 탭에서 PNG를 열었어요. 원본 페이지는 그대로 유지됩니다.';
 }
 
 async function shareGeneratedPoster() {
@@ -249,11 +251,10 @@ async function shareGeneratedPoster() {
       await navigator.share({ title: '나의 최애 캐릭터 아카이브', text: '내가 사랑한 캐릭터들', files: [file] });
       posterStatus.textContent = '공유 창을 열었어요.';
     } else {
-      savePoster();
-      posterStatus.textContent = '이 브라우저에서는 PNG 파일로 저장했어요.';
+      openPosterInNewTab();
     }
   } catch (error) {
-    if (error.name !== 'AbortError') posterStatus.textContent = '공유하지 못했어요. PNG 저장을 이용해 주세요.';
+    if (error.name !== 'AbortError') posterStatus.textContent = '공유하지 못했어요. PNG 새 탭 열기를 이용해 주세요.';
   }
 }
 
@@ -268,7 +269,7 @@ clearButton.addEventListener('click', () => {
 });
 generate.addEventListener('click', makePrompt);
 makePoster.addEventListener('click', createPoster);
-downloadPoster.addEventListener('click', savePoster);
+downloadPoster.addEventListener('click', openPosterInNewTab);
 sharePoster.addEventListener('click', shareGeneratedPoster);
 copy.addEventListener('click', async () => {
   try { await navigator.clipboard.writeText(prompt.value); copy.textContent = '복사 완료 ✓'; setTimeout(() => copy.textContent = '프롬프트 복사', 1600); }
