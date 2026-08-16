@@ -154,16 +154,21 @@ async function createPoster() {
     const context = canvas.getContext('2d');
     canvas.width = 1080;
     canvas.height = 1350;
-    context.fillStyle = '#f5f1e9';
+    // Keep the exported poster soft and let the magenta frame be the single accent.
+    context.fillStyle = '#fcfcfc';
     context.fillRect(0, 0, canvas.width, canvas.height);
 
-    context.fillStyle = '#ce4e3d';
+    context.strokeStyle = '#f2a8cd';
+    context.lineWidth = 4;
+    context.strokeRect(18, 18, canvas.width - 36, canvas.height - 36);
+
+    context.fillStyle = '#d976a8';
     context.font = '500 24px "DM Mono", monospace';
     context.fillText('MY CHARACTER ARCHIVE', 72, 86);
-    context.fillStyle = '#1c202a';
+    context.fillStyle = '#20383e';
     context.font = '700 58px "Noto Sans KR", sans-serif';
     context.fillText('내가 사랑한 캐릭터들', 72, 160);
-    context.strokeStyle = '#1c202a';
+    context.strokeStyle = '#78d8c8';
     context.lineWidth = 2;
     context.beginPath();
     context.moveTo(72, 203);
@@ -187,7 +192,7 @@ async function createPoster() {
       const row = Math.floor(index / columns);
       const x = edge + column * (cardWidth + gap);
       const y = gridTop + row * (cardHeight + gap);
-      context.fillStyle = '#fffdf8';
+      context.fillStyle = '#ffffff';
       context.fillRect(x, y, cardWidth, cardHeight);
       context.save();
       context.beginPath();
@@ -196,13 +201,12 @@ async function createPoster() {
       drawCover(context, images[index], x, y, cardWidth, imageHeight);
       context.restore();
       const work = entry.work.length > 22 ? `${entry.work.slice(0, 22)}…` : entry.work;
-      context.fillStyle = '#1c202a';
       context.textAlign = 'center';
       context.textBaseline = 'middle';
-      context.fillStyle = '#77756f';
+      context.fillStyle = '#63797c';
       context.font = '500 21px "Noto Sans KR", sans-serif';
       context.fillText(work, x + cardWidth / 2, y + imageHeight + 29);
-      context.fillStyle = '#1c202a';
+      context.fillStyle = '#20383e';
       context.font = '700 32px "Noto Sans KR", sans-serif';
       const name = entry.name.length > 14 ? `${entry.name.slice(0, 14)}…` : entry.name;
       context.fillText(name, x + cardWidth / 2, y + imageHeight + 63);
