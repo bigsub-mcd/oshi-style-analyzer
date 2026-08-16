@@ -235,12 +235,18 @@ async function createPoster() {
 
 function openPosterInNewTab() {
   if (!posterBlob) return;
-  const link = document.createElement('a');
-  link.href = posterPreview.src;
-  link.target = '_blank';
-  link.rel = 'noopener';
-  link.click();
-  posterStatus.textContent = '새 탭에서 PNG를 열었어요. 원본 페이지는 그대로 유지됩니다.';
+  // Safari and some mobile browsers can ignore a detached <a target="_blank">
+  // and show the PNG in the current tab. Open the browsing context synchronously
+  // from the button click, then navigate that new tab to the generated image.
+  const posterTab = window.open('', '_blank');
+  if (!posterTab) {
+    posterStatus.textContent = '새 탭을 열지 못했어요. 브라우저의 팝업 차단을 해제한 뒤 다시 시도해 주세요.';
+    return;
+  }
+
+  posterTab.opener = null;
+  posterTab.location.replace(URL.createObjectURL(posterBlob));
+  posterStatus.textContent = '새 탭에서 PNG를 열었어요. 원래 입력 페이지는 그대로 유지됩니다.';
 }
 
 async function shareGeneratedPoster() {
